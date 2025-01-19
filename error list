@@ -1,0 +1,147 @@
+1) first error occures in data['bins'] = pd.cut(data.no_of_words, bins =[0,100,200,300,500,800,np.inf] , labels =['0-100','100-200','200-500','500-800','>800'])
+Ans --> 
+data['bins'] = pd.cut(
+    data['no_of_words'],
+    bins=[0, 100, 200, 300, 500, 800, np.inf],  # 6 bin edges, creating 5 bins
+    labels=['0-100', '100-200', '200-300', '300-500', '500-800', '>800']  # 6 labels for 6 bins
+)
+
+
+2) Second Eroor 
+word_distribution = data.groupby('bins').size().reset_index().rename(columns={0:'word_count'})
+sns.barplot(x='bins', y='word_counts', data= word_distribution).set_title("word distribution per bin")
+Ans-->>
+word_distribution = data.groupby('bins').size().reset_index(name='word_count')
+# Plot using Seaborn
+sns.barplot(x='bins', y='word_count', data=word_distribution).set_title("Word Distribution per Bin")
+# Show the plot
+plt.show()
+
+
+3) third error 
+data['description'] = data['description'].str.replace(r'\s+',' ')
+data['description'] = data['description'].apply(lambda x: " ".join(x for x in x.split() if len(x)>1))
+print(data['description'].head())
+Ans -->> 
+# Replace multiple spaces with a single space (explicitly set regex=True)
+data['description'] = data['description'].astype(str).str.replace(r'\s+', ' ', regex=True)
+# Remove words with length <= 1
+data['description'] = data['description'].apply(lambda x: " ".join(word for word in x.split() if len(word) > 1))
+# Print the first few rows
+print(data['description'].head())
+
+
+4) fourth error 
+def predict_products(text):
+    #geting index
+    index = product_index[text]
+    #pairwise similarity scores
+    score_matrix = linear_kernel(T_vec_matrix[index], T_vec_matrix)
+    matching_sc = list(enumerate(score_matrix[0]))
+    #sort the product based on the similarity score
+    matching_sc = sorted(matching_sc, key = lambda x:x[1],reverse=True)
+    #Getting Score of 10 most similar products 
+    matching_sc - matching_sc[1:11]
+    #getting product indices
+    product_indices = [i[0] for i in matching_sc]
+    #show the similar product 
+    return data['product_name'].iloc[product_indices]
+
+ANS -- >>  
+
+def predict_products(text):
+    # Getting the index of the input product
+    index = product_index[text]
+    
+    # Pairwise similarity scores
+    score_matrix = linear_kernel(T_vec_matrix[index], T_vec_matrix)
+    matching_sc = list(enumerate(score_matrix[0]))
+    
+    # Sort the products based on the similarity score
+    matching_sc = sorted(matching_sc, key=lambda x: x[1], reverse=True)
+    
+    # Getting the scores of the top 10 most similar products (excluding the input product itself)
+    matching_sc = matching_sc[1:11]  # Fix: Correct slicing
+    
+    # Getting product indices of the top matches
+    product_indices = [i[0] for i in matching_sc]
+    
+    # Show the similar products
+    return data['product_name'].iloc[product_indices]
+
+
+5)  fifth error 
+# Get recommended products based on user input
+input_product = input("Enter a product name: ")
+try:
+    recommended_products = predict_products(input_product)
+    if not recommended_products.empty:
+        print("Similar Products:\n")
+        for product_name in recommended_products:
+            print(product_name)
+    else:
+        print("No similar products found.")
+except KeyError:
+    print("The entered product name does not exist in the dataset. Please try again.")
+
+
+# Get recommended products based on user input
+input_product = input("Enter a product name: ")
+
+try:
+    recommended_products = predict_products(input_product)
+    
+    # Check if any similar products were found
+    if not recommended_products.empty:
+        print("Similar Products:\n")
+        for product_name in recommended_products:
+            print(product_name)
+    else:
+        print("No similar products found.")
+except KeyError:
+    print("The entered product name does not exist in the dataset. Please try again.")
+
+
+
+
+6) Sixth error is about gensim file error you to download this from kaggle.com 
+https://youtu.be/ZjaMvO3VEdU?si=NYxZ_IXCC5tCnoG6 watch this
+https://www.kaggle.com/datasets/leadbest/googlenewsvectorsnegative300 open this and download the right file
+
+7) error occurs in 1D 
+change the code and paste following code 
+Ans -->> 
+from scipy.spatial.distance import cosine
+def get_sem(query_embedding, doc_embedding):
+    if query_embedding.ndim != 1 or doc_embedding.ndim != 1:
+        raise ValueError("Both embeddings must be 1-D.")
+    if np.all(query_embedding == 0) or np.all(doc_embedding == 0):
+        return 0.0
+    return 1 - cosine(query_embedding, doc_embedding)
+
+# Rank documents based on query
+def Ranked_documents(query):
+    # Tokenize query and get embeddings
+    query_words = [get_embedding(token) for token in nltk.word_tokenize(query.lower())]
+    if not query_words:
+        print("Query resulted in no valid tokens. Returning empty results.")
+        return pd.DataFrame(columns=['product_name', 'description', 'score'])
+
+    # Compute query embedding (ensure 1-D)
+    query_embedding = np.mean(query_words, axis=0)
+    if query_embedding.ndim != 1:
+        raise ValueError("Query embedding is not 1-D.")
+
+    # Compute document rankings
+    rank = [
+        (k, get_sem(query_embedding, v)) for k, v in out_dict.items() if v.ndim == 1
+    ]
+
+    # Sort by similarity and return top results
+    rank = sorted(rank, key=lambda t: t[1], reverse=True)
+    rank_df = pd.DataFrame(rank, columns=['Desc', 'score'])
+    result = pd.merge(data1, rank_df, left_on='description', right_on='Desc', how='inner')
+    return result[['product_name', 'description', 'score']]
+
+8) this is not error but we need to work on correctness of model by using following Code 
+Ans-->> result = result.sort_values(by='score', ascending=False)
